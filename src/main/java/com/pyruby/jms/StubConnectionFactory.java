@@ -7,11 +7,9 @@ import javax.jms.*;
 import java.io.Serializable;
 
 public class StubConnectionFactory implements ConnectionFactory {
-    private final JmsServer jmsServer;
     private final StubConnection connection;
 
     public StubConnectionFactory(JmsServer jmsServer) {
-        this.jmsServer = jmsServer;
         this.connection = new StubConnection(jmsServer);
     }
 

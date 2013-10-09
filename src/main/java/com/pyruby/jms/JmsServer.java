@@ -8,23 +8,34 @@ import java.util.*;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * This is the primary class for the JMS classes to call back into to do all the work for message
+ * sending, receiving, resetting destinations, blocking on messages, preventing delivery of messages etc.
+ * From a testing perspective, this is the place to go to get hold of the destination messages and interact
+ * with them.
+ */
 public class JmsServer {
     private static JmsServer instance = new JmsServer();
     private Map<String, DestinationMessages> destinations = new HashMap<String, DestinationMessages>();
     final WeakHashMap<Session, List<StubMessage>> messagesInFlight =  new WeakHashMap<Session, List<StubMessage>>(5);
-    private StubConnectionFactory f;
+    private StubConnectionFactory connectionFactory;
 
     public static JmsServer getInstance() {
         return instance;
     }
 
+    /**
+     * Factory method to retrieve the ConnectionFactory to be used either straight, or bound to JNDI.
+     * @return connectionFactory
+     */
     public static ConnectionFactory createConnectionFactory() {
-        return getInstance().f;
+        return getInstance().connectionFactory;
     }
 
     private JmsServer() {
-        f = new StubConnectionFactory(this);
+        connectionFactory = new StubConnectionFactory(this);
     }
+
 
     public DestinationMessages getDestination(javax.jms.Destination destination) {
         return getDestination(((StubDestination)destination).getName());
@@ -43,11 +54,11 @@ public class JmsServer {
         getDestination(destination).send((StubMessage) message);
     }
 
-    public Message nextMessage(StubMessageConsumer consumer, long timeout, TimeUnit timeUnit) {
+    Message nextMessage(StubMessageConsumer consumer, long timeout, TimeUnit timeUnit) {
         return getDestination(consumer.getDestinationName()).poll(consumer, timeout, timeUnit);
     }
 
-    public void commitMessages(Session session) {
+    void commitMessages(Session session) {
 
         List<StubMessage> stubMessages = messagesInFlight.get(session);
         if (stubMessages != null) {
@@ -75,18 +86,9 @@ public class JmsServer {
 
     static class DestinationMessages {
         public final Deque<StubMessage> allMessages = new LinkedList<StubMessage>();
-        final LinkedBlockingDeque<StubMessage> messagesAwaitingDelivery = new LinkedBlockingDeque<StubMessage>(100);
-        final WeakHashMap<Session, List<StubMessage>> messagesInFlight;
-        boolean blocked = false;
-
-        private DestinationMessages(WeakHashMap<Session, List<StubMessage>> messagesInFlight) {
-            this.messagesInFlight = messagesInFlight;
-        }
-
-        public void send(StubMessage message) {
-            allMessages.add(message);
-            message.deliverTo(messagesAwaitingDelivery, blocked);
-        }
+        private final LinkedBlockingDeque<StubMessage> messagesAwaitingDelivery = new LinkedBlockingDeque<StubMessage>(100);
+        private final WeakHashMap<Session, List<StubMessage>> messagesInFlight;
+        private boolean blocked = false;
 
         public void drain() {
             allMessages.clear();
@@ -95,7 +97,39 @@ public class JmsServer {
             }
         }
 
-        public StubMessage poll(StubMessageConsumer consumer, long timeout, TimeUnit timeUnit) {
+        public boolean isBlocked() {
+            return blocked;
+        }
+
+        public void unblockDelivery() {
+            blocked = false;
+            for(StubMessage message : allMessages) {
+                message.deliver();
+            }
+        }
+
+        public void awaitAllMessagesProcessed(long timeout, TimeUnit timeUnit) throws InterruptedException {
+            unblockDelivery();
+            StubMessage lastMessage = allMessages.peekLast();
+            if (lastMessage != null) {
+                lastMessage.awaitReceipt(timeout, timeUnit);
+            }
+        }
+
+        public void block() {
+            blocked = true;
+        }
+
+        private DestinationMessages(WeakHashMap<Session, List<StubMessage>> messagesInFlight) {
+            this.messagesInFlight = messagesInFlight;
+        }
+
+        private void send(StubMessage message) {
+            allMessages.add(message);
+            message.deliverTo(messagesAwaitingDelivery, blocked);
+        }
+
+        private StubMessage poll(StubMessageConsumer consumer, long timeout, TimeUnit timeUnit) {
             try {
                 StubMessage message = messagesAwaitingDelivery.poll(timeout, timeUnit);
                 List<StubMessage> messages = messagesInFlight.get(consumer.getSession());
@@ -107,20 +141,6 @@ public class JmsServer {
                 return message;
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
-            }
-        }
-
-        public void unblockDelivery() {
-            for(StubMessage message : allMessages) {
-                message.deliver();
-            }
-        }
-
-        public void awaitAllMessagesProcessed(long timeout, TimeUnit timeUnit) throws InterruptedException {
-            unblockDelivery();
-            StubMessage lastMessage = allMessages.peekLast();
-            if (lastMessage != null) {
-                lastMessage.awaitReceipt(timeout, timeUnit);
             }
         }
     }

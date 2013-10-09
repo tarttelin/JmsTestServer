@@ -49,7 +49,7 @@ public class StubConnectionFactoryTest {
         c.initialize();
         c.start();
         StubTextMessage message = new StubTextMessage("my message");
-        JmsServer.getInstance().getDestination(q).blocked = true;
+        JmsServer.getInstance().getDestination(q).block();
         JmsServer.getInstance().sendMessage(q, message);
         assertEquals(false, message.delivered);
         message.deliver();
