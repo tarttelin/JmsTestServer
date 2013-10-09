@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+
+<beans>
+
+    <bean id="fooName" class="org.eclipse.jetty.plus.jndi.EnvEntry">
+        <constructor-arg index="0" value="Name"/>
+        <constructor-arg index="1" value="Mum!"/>
+    </bean>
+
+    <bean id="mqFactory" class="org.eclipse.jetty.plus.jndi.Resource">
+        <constructor-arg index="0" value="jms/mqFactory"/>
+        <constructor-arg index="1">
+            <bean id="jmsFactory" class="org.springframework.jms.connection.CachingConnectionFactory">
+                <property name="targetConnectionFactory">
+                    <!--<bean class="org.apache.activemq.ActiveMQConnectionFactory">-->
+                        <!--<property name="brokerURL" value="tcp://localhost:61616"/>-->
+                    <!--</bean>-->
+                    <bean class="com.pyruby.jms.JmsServer" factory-method="createConnectionFactory"/>
+                </property>
+                <property name="reconnectOnException" value="true"/>
+                <property name="sessionCacheSize" value="10"/>
+                <property name="cacheProducers" value="false"/>
+            </bean>
+        </constructor-arg>
+    </bean>
+
+    <bean id="queueTheFirst" class="org.eclipse.jetty.plus.jndi.Resource">
+        <constructor-arg index="0" value="jms/queue.first"/>
+        <constructor-arg index="1">
+            <!--<bean class="org.apache.activemq.command.ActiveMQQueue">-->
+                <!--<constructor-arg index="0" value="FOO.QUEUE.1"/>-->
+            <!--</bean>-->
+            <bean class="com.pyruby.jms.StubDestination.StubQueue">
+                <constructor-arg index="0" value="FOO.QUEUE.1"/>
+            </bean>
+        </constructor-arg>
+    </bean>
+
+    <bean id="queueTheSecond" class="org.eclipse.jetty.plus.jndi.Resource">
+        <constructor-arg index="0" value="jms/queue.second"/>
+        <constructor-arg index="1">
+            <!--<bean class="org.apache.activemq.command.ActiveMQQueue">-->
+                <!--<constructor-arg index="0" value="FOO.QUEUE.2"/>-->
+            <!--</bean>-->
+            <bean class="com.pyruby.jms.StubDestination.StubQueue">
+                <constructor-arg index="0" value="FOO.QUEUE.2"/>
+            </bean>
+        </constructor-arg>
+    </bean>
+
+    <bean id="server"
+          class="org.eclipse.jetty.server.Server" init-method="start" destroy-method="stop" depends-on="fooName">
+        <property name="connectors">
+            <list>
+                <bean id="connector" class="org.eclipse.jetty.server.nio.SelectChannelConnector">
+                    <property name="port" value="8181"/>
+                </bean>
+            </list>
+        </property>
+
+        <property name="handler">
+            <bean id="handlers"
+                  class="org.eclipse.jetty.server.handler.HandlerCollection">
+                <property name="handlers">
+                    <list>
+                        <bean id="contexts"
+                              class="org.eclipse.jetty.server.handler.ContextHandlerCollection">
+                            <property name="handlers">
+                                <list>
+                                    <bean class="org.eclipse.jetty.webapp.WebAppContext">
+                                        <constructor-arg index="0" value="src/main/webapp"/>
+                                        <constructor-arg index="1" value="/"/>
+                                    </bean>
+                                </list>
+                            </property>
+                        </bean>
+                    </list>
+                </property>
+            </bean>
+        </property>
+
+    </bean>
+
+</beans>

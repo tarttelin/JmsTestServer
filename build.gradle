@@ -1,0 +1,24 @@
+apply plugin: 'idea'
+apply plugin: 'java'
+
+repositories {
+    mavenCentral()
+}
+
+logbackVersion = '1.0.0'
+
+dependencies {
+    compile "org.springframework:spring-jms:3.2.3.RELEASE",
+            "org.springframework:spring-web:3.2.3.RELEASE",
+            "org.springframework:spring-jdbc:3.2.3.RELEASE",
+            "org.apache.activemq:activemq-core:5.2.0",
+            'org.eclipse.jetty:jetty-server:8.1.12.v20130726',
+            'org.eclipse.jetty:jetty-webapp:8.1.12.v20130726',
+            'org.eclipse.jetty:jetty-jndi:8.1.12.v20130726',
+            'org.eclipse.jetty:jetty-plus:8.1.12.v20130726',
+            'org.hsqldb:hsqldb:2.3.0'
+
+    compile group: 'org.slf4j', name:'slf4j-api', version: '1.6.4'
+    runtime group: 'ch.qos.logback', name:'logback-classic', version: logbackVersion
+    runtime group: 'ch.qos.logback', name:'logback-core', version: logbackVersion
+}
