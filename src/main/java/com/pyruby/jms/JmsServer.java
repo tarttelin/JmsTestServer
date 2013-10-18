@@ -1,8 +1,11 @@
 package com.pyruby.jms;
 
 
+import com.pyruby.jms.message.StubMessage;
+
 import javax.jms.ConnectionFactory;
 import javax.jms.Message;
+import javax.jms.MessageListener;
 import javax.jms.Session;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -84,11 +87,12 @@ public class JmsServer {
         messagesInFlight.clear();
     }
 
-    static class DestinationMessages {
+    public static class DestinationMessages {
         public final Deque<StubMessage> allMessages = new LinkedList<StubMessage>();
         private final LinkedBlockingDeque<StubMessage> messagesAwaitingDelivery = new LinkedBlockingDeque<StubMessage>(100);
         private final WeakHashMap<Session, List<StubMessage>> messagesInFlight;
-        private boolean blocked = false;
+        private boolean blocked;
+        private MessageListener listener;
 
         public void drain() {
             allMessages.clear();
@@ -104,7 +108,15 @@ public class JmsServer {
         public void unblockDelivery() {
             blocked = false;
             for(StubMessage message : allMessages) {
-                message.deliver();
+                if (this.listener != null) {
+                    if (!blocked) {
+                        listener.onMessage(message);
+                        message.processed();
+                        message.delivered = true;
+                    }
+                } else {
+                    message.deliver();
+                }
             }
         }
 
@@ -126,7 +138,15 @@ public class JmsServer {
 
         private void send(StubMessage message) {
             allMessages.add(message);
-            message.deliverTo(messagesAwaitingDelivery, blocked);
+            if (this.listener != null) {
+                if (!blocked) {
+                    listener.onMessage(message);
+                    message.processed();
+                    message.delivered = true;
+                }
+            } else {
+                message.deliverTo(messagesAwaitingDelivery, blocked);
+            }
         }
 
         private StubMessage poll(StubMessageConsumer consumer, long timeout, TimeUnit timeUnit) {
@@ -142,6 +162,10 @@ public class JmsServer {
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
+        }
+
+        public void setListener(MessageListener listener) {
+            this.listener = listener;
         }
     }
 }

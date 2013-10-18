@@ -1,4 +1,4 @@
-package com.pyruby.jms;
+package com.pyruby.jms.message;
 
 import javax.jms.Destination;
 import javax.jms.JMSException;

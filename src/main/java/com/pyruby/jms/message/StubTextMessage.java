@@ -1,7 +1,5 @@
 package com.pyruby.jms.message;
 
-import com.pyruby.jms.StubMessage;
-
 import javax.jms.JMSException;
 import javax.jms.TextMessage;
 
