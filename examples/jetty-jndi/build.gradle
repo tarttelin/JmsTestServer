@@ -11,7 +11,7 @@ repositories {
 logbackVersion = '1.0.0'
 
 dependencies {
-    compile("com.pyruby:stub-jms-server:0.1-SNAPSHOT") {
+    compile("com.pyruby:jms-test-server:0.1-SNAPSHOT") {
         changing = true
     }
     compile "org.springframework:spring-jms:3.2.3.RELEASE",
