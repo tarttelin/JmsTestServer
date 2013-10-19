@@ -1,0 +1,70 @@
+<html>
+    <head>
+        <title>JMS Test Server</title>
+        <style>
+            body {
+                width: 100%;
+                margin: 0;
+                font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            }
+            #head {
+				background-color: #006400;
+				background-image: -webkit-linear-gradient(top, #006400, #003500);
+                background-image: linear-gradient(#006400, #003500);
+                color: white;
+                padding-top: 0.4em;
+                font-size: 1.5em;
+                text-shadow: #003500;
+                width: 100%;
+                height: 2.0em;
+            }
+            #title {
+                font-size: 1.2em;
+                padding-left: 50px;
+            }
+            #content {
+                padding-left: 1em;
+                padding-right: 3em;
+                font-size: 1em;
+                min-height: 400px;
+                background-color: #edf6ff;
+                border-radius: 0.5em;
+                margin: 1em;
+                border-color: #d9f6ea;
+                border-width: 1px;
+                border-style: solid;
+            }
+            .deps {
+                list-style: square;
+            }
+            footer {
+                font-size: 0.7em;
+                padding-left: 1em;
+                border-top: 1px solid black;
+            }
+        </style>
+    </head>
+    <body>
+    <a href="https://github.com/tarttelin/JMSTestServer"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_green_007200.png" alt="Fork me on GitHub"></a>
+    <div id="head"><span id="title">JMS Test Server</span> - Integration testing for JMS</div>
+        <div id="content">
+            <h2>JMS Test Server is an in-VM JMS server that can be watched and asserted on by your integration tests.</h2>
+            <p>Eliminates the need for sleeps or quirky monitoring of the application under test by allowing you to block on messages in the JMS queue until they have been processed.</p>
+            <p>Capture the messages added to the queue so you can assert on their content.</p>
+			<p>Block the queues so no messages are delivered, then choose the order in which to deliver the messages.</p>
+            <hr>
+            <h3>Example</h3>
+            <p>As the library was written Test First, the repository is full of useful tests which serve as the most comprehensive documentation.</p>
+            <hr>
+            <h3>Dependency</h3>
+            <p>The library is not yet available from Maven Central, but you can install it in your local maven cache by running gradle build install, then using the following dependencies in your project:</p>
+            <ul class="deps">
+                <li>groupId: com.pyruby</li>
+                <li>artifactId: java-stub-server</li>
+            </ul>
+        </div>
+        <footer>
+            &copy;PyRuby LTD 2013 - <a href="http://www.pyruby.com">website</a>
+        </footer>
+    </body>
+</html>
